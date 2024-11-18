@@ -281,64 +281,121 @@ class EmailNotifierWithEnvTest < ActiveSupport::TestCase
 
     body << "    * Rails root : #{Rails.root}\n" if defined?(Rails) && Rails.respond_to?(:root)
 
-    body << <<-BODY.gsub(/^      /, '')
-        * Process: #{Process.pid}
+    if Gem::Specification.find_by_name('rack').version.to_s < '3'
+      body << <<-BODY.gsub(/^        /, '')
+          * Process: #{Process.pid}
 
-      -------------------------------
-      Session:
-      -------------------------------
+        -------------------------------
+        Session:
+        -------------------------------
 
-        * session id: [FILTERED]
-        * data: {}
+          * session id: [FILTERED]
+          * data: {}
 
-      -------------------------------
-      Environment:
-      -------------------------------
+        -------------------------------
+        Environment:
+        -------------------------------
 
-        * CONTENT_LENGTH                            : 0
+          * CONTENT_LENGTH                            : 0
+            * HTTPS                                     : on
+            * HTTP_HOST                                 : test.address
+            * HTTP_USER_AGENT                           : Rails Testing
+            * PATH_INFO                                 : /
+            * QUERY_STRING                              : id=foo&secret=secret
+            * REMOTE_ADDR                               : 127.0.0.1
+            * REQUEST_METHOD                            : GET
+            * SCRIPT_NAME                               :
+            * SERVER_NAME                               : example.org
+            * SERVER_PORT                               : 80
+            * action_controller.instance                : #{@controller}
+            * action_dispatch.parameter_filter          : [\"secret\"]
+            * action_dispatch.request.content_type      :
+            * action_dispatch.request.parameters        : {"id"=>"foo", "secret"=>"[FILTERED]"}
+            * action_dispatch.request.path_parameters   : {}
+            * action_dispatch.request.query_parameters  : {"id"=>"foo", "secret"=>"[FILTERED]"}
+            * action_dispatch.request.request_parameters: {}
+            * rack.errors                               : #{@test_env['rack.errors']}
+            * rack.input                                : #{@test_env['rack.input']}
+            * rack.multiprocess                         : true
+            * rack.multithread                          : true
+            * rack.request.query_hash                   : {"id"=>"foo", "secret"=>"[FILTERED]"}
+            * rack.request.query_string                 : id=foo&secret=secret
+            * rack.run_once                             : false
+            * rack.session                              : #{@test_env['rack.session']}
+            * rack.session.options                      : #{@test_env['rack.session.options']}
+            * rack.url_scheme                           : http
+            * rack.version                              : #{Rack::VERSION}
+
+        -------------------------------
+        Backtrace:
+        -------------------------------
+
+          test/exception_notifier/email_notifier_test.rb:20
+
+        -------------------------------
+        Data:
+        -------------------------------
+
+          * data: {:message=>\"My Custom Message\"}
+
+
+      BODY
+    else # Rack 3
+      body << <<-BODY.gsub(/^        /, '')
+          * Process: #{Process.pid}
+
+        -------------------------------
+        Session:
+        -------------------------------
+
+          * session id: [FILTERED]
+          * data: {}
+
+        -------------------------------
+        Environment:
+        -------------------------------
+
           * HTTPS                                     : on
-          * HTTP_HOST                                 : test.address
-          * HTTP_USER_AGENT                           : Rails Testing
-          * PATH_INFO                                 : /
-          * QUERY_STRING                              : id=foo&secret=secret
-          * REMOTE_ADDR                               : 127.0.0.1
-          * REQUEST_METHOD                            : GET
-          * SCRIPT_NAME                               :
-          * SERVER_NAME                               : example.org
-          * SERVER_PORT                               : 80
-          * action_controller.instance                : #{@controller}
-          * action_dispatch.parameter_filter          : [\"secret\"]
-          * action_dispatch.request.content_type      :
-          * action_dispatch.request.parameters        : {"id"=>"foo", "secret"=>"[FILTERED]"}
-          * action_dispatch.request.path_parameters   : {}
-          * action_dispatch.request.query_parameters  : {"id"=>"foo", "secret"=>"[FILTERED]"}
-          * action_dispatch.request.request_parameters: {}
-          * rack.errors                               : #{@test_env['rack.errors']}
-          * rack.input                                : #{@test_env['rack.input']}
-          * rack.multiprocess                         : true
-          * rack.multithread                          : true
-          * rack.request.query_hash                   : {"id"=>"foo", "secret"=>"[FILTERED]"}
-          * rack.request.query_string                 : id=foo&secret=secret
-          * rack.run_once                             : false
-          * rack.session                              : #{@test_env['rack.session']}
-          * rack.session.options                      : #{@test_env['rack.session.options']}
-          * rack.url_scheme                           : http
-          * rack.version                              : #{Rack::VERSION}
+            * HTTP_HOST                                 : test.address
+            * HTTP_USER_AGENT                           : Rails Testing
+            * PATH_INFO                                 : /
+            * QUERY_STRING                              : id=foo&secret=secret
+            * REMOTE_ADDR                               : 127.0.0.1
+            * REQUEST_METHOD                            : GET
+            * SCRIPT_NAME                               :
+            * SERVER_NAME                               : example.org
+            * SERVER_PORT                               : 80
+            * SERVER_PROTOCOL                           : HTTP/1.1
+            * action_controller.instance                : #{@controller}
+            * action_dispatch.parameter_filter          : [\"secret\"]
+            * action_dispatch.request.parameters        : {"id"=>"foo", "secret"=>"[FILTERED]"}
+            * action_dispatch.request.path_parameters   : {}
+            * action_dispatch.request.query_parameters  : {"id"=>"foo", "secret"=>"[FILTERED]"}
+            * action_dispatch.request.request_parameters: {}
+            * rack.errors                               : #{@test_env['rack.errors']}
+            * rack.request.form_hash                    : {}
+            * rack.request.form_input                   :
+            * rack.request.query_hash                   : {"id"=>"foo", "secret"=>"[FILTERED]"}
+            * rack.request.query_string                 : id=foo&secret=secret
+            * rack.session                              : #{@test_env['rack.session']}
+            * rack.session.options                      : #{@test_env['rack.session.options']}
+            * rack.url_scheme                           : http
 
-      -------------------------------
-      Backtrace:
-      -------------------------------
+        -------------------------------
+        Backtrace:
+        -------------------------------
 
-        test/exception_notifier/email_notifier_test.rb:20
+          test/exception_notifier/email_notifier_test.rb:20
 
-      -------------------------------
-      Data:
-      -------------------------------
+        -------------------------------
+        Data:
+        -------------------------------
 
-        * data: {:message=>\"My Custom Message\"}
+          * data: {:message=>\"My Custom Message\"}
 
 
-    BODY
+      BODY
+    end
 
     assert_equal body, @mail.decode_body
   end

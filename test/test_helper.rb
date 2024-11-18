@@ -8,6 +8,7 @@ require 'exception_notification'
 
 require 'minitest/autorun'
 require 'mocha/minitest'
+require 'active_support/core_ext'
 require 'active_support/test_case'
 require 'action_mailer'
 

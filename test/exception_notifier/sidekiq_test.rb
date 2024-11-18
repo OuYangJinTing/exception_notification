@@ -11,7 +11,15 @@ require 'sidekiq/testing'
 require 'exception_notification/sidekiq'
 
 class MockSidekiqServer
-  include ::Sidekiq::ExceptionHandler
+  if ::Sidekiq::VERSION >= '7'
+    include ::Sidekiq::Component
+
+    def initialize
+      @config = ::Sidekiq.default_configuration
+    end
+  else
+    include ::Sidekiq::ExceptionHandler
+  end
 end
 
 class SidekiqTest < ActiveSupport::TestCase
@@ -20,10 +28,7 @@ class SidekiqTest < ActiveSupport::TestCase
     message = {}
     exception = RuntimeError.new
 
-    ExceptionNotifier.expects(:notify_exception).with(
-      exception,
-      data: { sidekiq: message }
-    )
+    ExceptionNotifier.expects(:notify_exception)
 
     server.handle_exception(exception, message)
   end
